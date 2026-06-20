@@ -1,0 +1,165 @@
+/* Custom Style Overrides & GIS Enhancements for YatraNepal */
+
+:root {
+  --blue: #6366f1;
+  --green: #10b981;
+  --amber: #f59e0b;
+  --red: #ef4444;
+}
+
+body {
+  font-family: 'Outfit', 'Segoe UI', sans-serif;
+  background-color: #0b0f19;
+  background-image: 
+    radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.05) 0%, transparent 40%),
+    radial-gradient(circle at 90% 80%, rgba(16, 185, 129, 0.05) 0%, transparent 40%);
+  min-height: 100vh;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'DM Serif Display', Georgia, serif;
+  letter-spacing: 0.01em;
+}
+
+/* Wizard step panels switching */
+.panel {
+  display: none;
+}
+.panel.active {
+  display: block;
+}
+
+/* Tabs switching */
+.tab-panel {
+  display: none;
+}
+.tab-panel.active {
+  display: block;
+}
+
+/* Map Containers */
+.map-shell,
+.map-frame {
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  position: relative;
+}
+
+/* Route animations */
+.route-line {
+  stroke-dasharray: 10, 6;
+  animation: routeFlow 30s linear infinite;
+}
+
+@keyframes routeFlow {
+  to {
+    stroke-dashoffset: -1000;
+  }
+}
+
+.route-pulse {
+  animation: pulsate 2s ease-out infinite;
+}
+
+@keyframes pulsate {
+  0% {
+    transform: scale(0.9);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 0.3;
+  }
+  100% {
+    transform: scale(0.9);
+    opacity: 0.8;
+  }
+}
+
+/* Circular Travel Rating Gauge */
+.rating-ring {
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  margin: 0 auto 20px;
+  background:
+    radial-gradient(circle closest-side, #1a1f2c 68%, transparent 69%),
+    conic-gradient(var(--green) calc(var(--score, 0) * 1%), rgba(255, 255, 255, 0.1) 0);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  position: relative;
+}
+
+.rating-ring strong {
+  font-size: 2.5rem;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 700;
+  color: var(--green);
+}
+
+.rating-ring span {
+  position: absolute;
+  bottom: 35px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Autocomplete suggestion drop-downs */
+#origin-results button {
+  text-align: left;
+  border: 0;
+  background: #212529;
+  color: #f8f9fa;
+  transition: background 0.15s ease;
+}
+
+#origin-results button:hover {
+  background: #2b3035;
+}
+
+/* Form and UI Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 99px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* InfoWindow custom layout styling override */
+.gm-style .gm-style-iw-c {
+  background-color: #212529 !important;
+  color: #f8f9fa !important;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px !important;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5) !important;
+}
+
+.gm-style .gm-style-iw-tc::after {
+  background-color: #212529 !important;
+}
+
+.gm-style-iw-d {
+  overflow: auto !important;
+  max-width: 320px !important;
+}
+
+/* Destination card hover effect */
+.destination-select-card:hover {
+  transform: translateY(-2.5px);
+  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.25) !important;
+  border-color: rgba(99, 102, 241, 0.6) !important;
+}

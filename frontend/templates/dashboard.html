@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}YatraNepal | Dashboard{% endblock %}
+{% block content %}
+<div class="container my-5">
+  <div class="row g-4">
+    <!-- Left Column: Saved Trips -->
+    <div class="col-lg-8">
+      <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+        <div>
+          <h1 class="display-5 fw-bold text-light mb-1" style="font-family:'DM Serif Display',Georgia,serif;">My Trips</h1>
+          <p class="text-secondary mb-0">See saved plans, ratings, and alert status.</p>
+        </div>
+        <div>
+          <a class="btn btn-primary rounded-pill px-4" style="background: linear-gradient(135deg, #6366f1, #4f46e5); border: 0;" href="/plan/">Plan New Trip</a>
+        </div>
+      </div>
+      
+      <div id="dashboard-trips" class="d-flex flex-column gap-4">
+        <!-- Dynamically loaded trips -->
+      </div>
+    </div>
+
+    <!-- Right Column: Quick Status Sidebar -->
+    <div class="col-lg-4">
+      <div class="card bg-dark-subtle border-secondary border-opacity-25 p-4 rounded-4 shadow-sm">
+        <h2 class="h4 fw-bold text-light mb-3" style="font-family:'DM Serif Display',Georgia,serif;">Quick Status</h2>
+        <p class="text-secondary small mb-4">Trips are stored locally in your browser. Each trip card includes a mini route map and local subscription status.</p>
+        
+        <div id="dashboard-summary" class="bg-dark bg-opacity-50 border border-secondary border-opacity-25 rounded-3 p-3 text-center">
+          <!-- Summary content loaded here -->
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  function deleteTrip(tripId) {
+    if (confirm("Are you sure you want to delete this trip?")) {
+      let trips = JSON.parse(localStorage.getItem("yatranepal_saved_trips") || "[]");
+      trips = trips.filter(t => t.id !== tripId);
+      localStorage.setItem("yatranepal_saved_trips", JSON.stringify(trips));
+      localStorage.removeItem(`yatranepal_alert_subscription_${tripId}`);
+      loadTrips();
+    }
+  }
+
+  // Make deleteTrip accessible globally for button onclick
+  window.deleteLocalTrip = deleteTrip;
+
+  function loadTrips() {
+    const container = document.getElementById('dashboard-trips');
+    const summary = document.getElementById('dashboard-summary');
+    try {
+      const trips = JSON.parse(localStorage.getItem("yatranepal_saved_trips") || "[]");
+      if (!trips.length) {
+        container.innerHTML = `
+          <div class="card bg-dark-subtle border-secondary border-opacity-25 p-5 rounded-4 shadow-sm text-center">
+            <p class="text-secondary mb-0">No trips saved yet.</p>
+          </div>`;
+        summary.innerHTML = '<p class="text-secondary mb-0">Create your first plan to see ratings and maps here.</p>';
+        return;
+      }
+      
+      summary.innerHTML = `
+        <h3 class="display-6 fw-bold text-primary mb-1">${trips.length}</h3>
+        <p class="text-secondary small mb-0">Saved trip(s)</p>
+      `;
+
+      container.innerHTML = trips.map((trip) => {
+        const tripId = `trip-map-${trip.id}`;
+        setTimeout(() => {
+          const route = trip.route_geojson ? { route: trip.route_geojson, hazard_zones: [] } : null;
+          if (window.initMap && route && trip.origin_location && trip.destination && trip.destination.location) {
+            initMap(tripId, trip.origin_location, trip.destination, route, []);
+          }
+        }, 0);
+
+        // Compute rating badge color
+        let ratingColorClass = 'bg-secondary';
+        const ratingVal = parseInt(trip.travel_rating);
+        if (!isNaN(ratingVal)) {
+          if (ratingVal >= 80) ratingColorClass = 'bg-success';
+          else if (ratingVal >= 50) ratingColorClass = 'bg-warning text-dark';
+          else ratingColorClass = 'bg-danger';
+        }
+
+        return `
+          <div class="card bg-dark-subtle border-secondary border-opacity-25 rounded-4 shadow-sm overflow-hidden" id="card-${trip.id}">
+            <div class="card-body p-4">
+              <div class="d-flex flex-wrap justify-content-between align-items-start mb-3 gap-2">
+                <div>
+                  <h3 class="h5 fw-bold text-light mb-1">${trip.destination.name}</h3>
+                  <small class="text-secondary">${trip.destination.region} · ${trip.destination.district}</small>
+                </div>
+                <div class="text-sm-end">
+                  <span class="badge bg-primary-subtle text-primary rounded-pill px-2 py-1 mb-1 d-inline-block">${trip.status}</span>
+                  <div class="text-secondary small">${trip.departure_date} to ${trip.return_date}</div>
+                </div>
+              </div>
+              
+              <p class="text-secondary small mb-3">${trip.destination.description}</p>
+              
+              <div class="row g-3 mb-4 bg-dark bg-opacity-25 rounded-3 p-3 mx-0 border border-secondary border-opacity-10">
+                <div class="col-6 col-sm-3">
+                  <small class="d-block text-secondary">Rating</small>
+                  <strong class="badge ${ratingColorClass} rounded-pill mt-1">${trip.travel_rating || 'Pending'}</strong>
+                </div>
+                <div class="col-6 col-sm-3">
+                  <small class="d-block text-secondary">Activity</small>
+                  <strong class="text-light mt-1 d-block small">${trip.destination.activity_type}</strong>
+                </div>
+                <div class="col-6 col-sm-3">
+                  <small class="d-block text-secondary">Difficulty</small>
+                  <strong class="text-light mt-1 d-block small">${trip.destination.difficulty}</strong>
+                </div>
+                <div class="col-6 col-sm-3">
+                  <small class="d-block text-secondary">Altitude</small>
+                  <strong class="text-light mt-1 d-block small">${trip.destination.altitude}</strong>
+                </div>
+              </div>
+              
+              <div class="position-relative shadow-sm rounded-4 overflow-hidden mb-4" style="height: 250px;">
+                <div id="${tripId}" class="w-100 h-100 bg-dark-subtle"></div>
+              </div>
+              
+              <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <a class="btn btn-outline-secondary btn-sm rounded-pill px-3" href="/plan/">Plan Again</a>
+                <button class="btn btn-danger btn-sm rounded-pill px-3" onclick="window.deleteLocalTrip('${trip.id}')">Delete Trip</button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    } catch (error) {
+      container.innerHTML = `
+        <div class="card bg-danger-subtle border-danger border-opacity-25 p-4 rounded-4 text-danger">
+          <p class="mb-0">Failed to load local trips: ${error.message}</p>
+        </div>`;
+      summary.innerHTML = '<p class="text-danger mb-0">An error occurred while loading your saved trips.</p>';
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', loadTrips);
+})();
+</script>
+{% endblock %}
+

@@ -1,0 +1,835 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}YatraNepal | Advanced GIS Options Explorer{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3 px-4" style="min-height: calc(100vh - 120px);">
+  <div class="row g-4" style="height: calc(100vh - 160px);">
+    <!-- Sidebar Controls -->
+    <div class="col-lg-4 d-flex flex-column h-100" style="overflow-y: auto;">
+      <div class="card bg-dark-subtle border-secondary border-opacity-25 p-4 rounded-4 shadow-sm h-100 d-flex flex-column">
+        <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom border-secondary border-opacity-25">
+          <h2 class="h4 fw-bold text-light mb-0" style="font-family:'DM Serif Display',Georgia,serif;">Expert GIS Workspace</h2>
+          <a class="btn btn-outline-secondary btn-sm rounded-pill px-3" href="/plan/">➔ Planner</a>
+        </div>
+
+        <p class="text-secondary small mb-3">Expert-level GIS workspace providing multi-zone buffer analysis, custom distance rules, and Nepal zonal level administrative boundary tracking.</p>
+
+        <!-- GIS Expert Toolset -->
+        <div class="mb-4 border-bottom border-secondary border-opacity-20 pb-3">
+          <h4 class="h6 fw-bold text-primary mb-3">🛠️ Expert Analytical Tools</h4>
+          <div class="d-flex flex-column gap-2">
+            <!-- Ruler Tool -->
+            <button id="btn-toggle-ruler" class="btn btn-outline-info btn-sm rounded-3 py-2 text-start d-flex justify-content-between align-items-center">
+              <span>📏 Geodesic Path Ruler</span>
+              <span class="badge bg-secondary" id="ruler-status-badge">Disabled</span>
+            </button>
+            <div id="ruler-info-panel" class="bg-dark bg-opacity-50 border border-secondary border-opacity-25 rounded-3 p-2 small text-secondary d-none">
+              <div class="d-flex justify-content-between">
+                <span>Ruler Points:</span>
+                <strong class="text-light" id="ruler-points-count">0</strong>
+              </div>
+              <div class="d-flex justify-content-between mt-1">
+                <span>Measured Distance:</span>
+                <strong class="text-info" id="ruler-distance-val">0.00 km</strong>
+              </div>
+              <button id="btn-clear-ruler" class="btn btn-danger btn-xs mt-2 w-100 rounded-pill py-1" style="font-size:0.75rem;">Clear Path</button>
+            </div>
+
+            <!-- Boundaries Toggle -->
+            <div class="form-check form-switch mt-2">
+              <input class="form-check-input" type="checkbox" id="switch-province-boundaries" checked>
+              <label class="form-check-label text-light small" for="switch-province-boundaries">🗺️ Province Boundaries</label>
+            </div>
+            <div class="form-check form-switch mt-1">
+              <input class="form-check-input" type="checkbox" id="switch-district-boundaries" checked>
+              <label class="form-check-label text-light small" for="switch-district-boundaries">📍 District Boundaries</label>
+            </div>
+            <div class="form-check form-switch mt-1">
+              <input class="form-check-input" type="checkbox" id="switch-local-boundaries" checked>
+              <label class="form-check-label text-light small" for="switch-local-boundaries">🏢 Local Level Boundaries</label>
+            </div>
+            <div class="form-check form-switch mt-1">
+              <input class="form-check-input" type="checkbox" id="switch-nepal-buffers">
+              <label class="form-check-label text-light small" for="switch-nepal-buffers">⚠️ Nepal Hazard Buffers</label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dynamic Buffer Options -->
+        <div class="mb-4 border-bottom border-secondary border-opacity-20 pb-3">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h4 class="h6 fw-bold text-primary mb-0">Buffer Radius Control</h4>
+            <span class="badge bg-primary rounded-pill" id="buffer-val-badge">5 km</span>
+          </div>
+          <input type="range" class="form-range" id="buffer-range-slider" min="1" max="20" value="5">
+          <div class="d-flex justify-content-between text-secondary" style="font-size:0.75rem;">
+            <span>1 km</span>
+            <span>10 km</span>
+            <span>20 km</span>
+          </div>
+        </div>
+
+        <!-- GIS Exposure Data Output -->
+        <div class="flex-grow-1 overflow-y-auto mb-3" style="max-height: 250px;">
+          <h4 class="h6 fw-bold text-primary mb-3">📋 Intersecting Hazard Analysis</h4>
+          <div class="list-group gap-2" id="hazard-intersection-list">
+            <div class="text-secondary small">Generating route...</div>
+          </div>
+        </div>
+
+        <!-- Map Themes -->
+        <div>
+          <h4 class="h6 fw-bold text-primary mb-2">🗺️ Map Styled Themes</h4>
+          <div class="row g-2">
+            <div class="col-6">
+              <button class="btn btn-outline-light btn-sm w-100 rounded-3 active theme-select-btn" data-theme="dark">Dark Style</button>
+            </div>
+            <div class="col-6">
+              <button class="btn btn-outline-light btn-sm w-100 rounded-3 theme-select-btn" data-theme="silver">Silver Style</button>
+            </div>
+            <div class="col-6">
+              <button class="btn btn-outline-light btn-sm w-100 rounded-3 theme-select-btn" data-theme="satellite">Satellite</button>
+            </div>
+            <div class="col-6">
+              <button class="btn btn-outline-light btn-sm w-100 rounded-3 theme-select-btn" data-theme="terrain">Terrain</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Interactive Workspace Map -->
+    <div class="col-lg-8 h-100 position-relative">
+      <div class="position-relative shadow-lg rounded-4 overflow-hidden border border-secondary border-opacity-25 h-100">
+        <div id="explorer-workspace-map" class="w-100 h-100 bg-dark-subtle"></div>
+        
+        <!-- Live Compass Rose Overlay -->
+        <div id="compass-rose" class="position-absolute bg-dark bg-opacity-75 border border-secondary border-opacity-50 p-2 rounded-circle cursor-pointer shadow" style="top: 15px; right: 15px; width: 50px; height: 50px; cursor: pointer; transition: transform 0.15s ease;" title="Reset Map Heading to True North">
+          <svg viewBox="0 0 100 100" class="w-100 h-100" style="transition: transform 0.2s ease;" id="compass-needle">
+            <polygon points="50,10 40,50 50,45" fill="#ef4444" />
+            <polygon points="50,10 60,50 50,45" fill="#f8f9fa" />
+            <polygon points="50,90 40,50 50,55" fill="#6b7280" />
+            <polygon points="50,90 60,50 50,55" fill="#9ca3af" />
+            <circle cx="50" cy="50" r="4" fill="#1f2937" />
+          </svg>
+        </div>
+
+        <!-- Cursor Coordinates Inspector Panel -->
+        <div class="position-absolute bg-dark bg-opacity-75 border border-secondary border-opacity-50 px-3 py-1.5 rounded-3 shadow text-secondary small" style="bottom: 15px; left: 15px; font-family: monospace;" id="cursor-coords-panel">
+          Lat: --.---- · Lon: --.----
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  let mapInstance = null;
+  let directionsRenderer = null;
+  let directionsService = null;
+  let hazardPolygons = [];
+  let bufferPolygons = [];
+  let zonalBoundaries = [];
+  let routeCoords = [];
+
+  // Ruler Tool State variables
+  let rulerEnabled = false;
+  let rulerMarkers = [];
+  let rulerPolyline = null;
+  let rulerPoints = [];
+
+  // Parse URL Parameters
+  const params = new URLSearchParams(window.location.search);
+  const originLat = parseFloat(params.get("origin_lat")) || 27.7172;
+  const originLon = parseFloat(params.get("origin_lon")) || 85.3240;
+  const destLat = parseFloat(params.get("dest_lat")) || 28.2096;
+  const destLon = parseFloat(params.get("dest_lon")) || 83.9556;
+  const destName = params.get("dest_name") || "Pokhara";
+
+  const originLatLng = { lat: originLat, lng: originLon };
+  const destLatLng = { lat: destLat, lng: destLon };
+
+  // Google Maps Dark Style Map Type
+  const darkMapStyle = [
+    { elementType: "geometry", stylers: [{ color: "#1a1f2c" }] },
+    { elementType: "labels.icon", stylers: [{ visibility: "off" }] },
+    { elementType: "labels.text.fill", stylers: [{ color: "#9ca3af" }] },
+    { elementType: "labels.text.stroke", stylers: [{ color: "#111827" }] },
+    { featureType: "administrative", elementType: "geometry", stylers: [{ color: "#4b5563" }] },
+    { featureType: "administrative.country", elementType: "labels.text.fill", stylers: [{ color: "#d1d5db" }] },
+    { featureType: "poi", elementType: "labels.text.fill", stylers: [{ color: "#9ca3af" }] },
+    { featureType: "poi.park", elementType: "geometry", stylers: [{ color: "#1f2937" }] },
+    { featureType: "road", elementType: "geometry.fill", stylers: [{ color: "#374151" }] },
+    { featureType: "road", elementType: "labels.text.fill", stylers: [{ color: "#9ca3af" }] },
+    { featureType: "road.highway", elementType: "geometry", stylers: [{ color: "#4b5563" }] },
+    { featureType: "water", elementType: "geometry", stylers: [{ color: "#0b0f19" }] }
+  ];
+
+  const silverMapStyle = [
+    { elementType: "geometry", stylers: [{ color: "#f3f4f6" }] },
+    { elementType: "labels.icon", stylers: [{ visibility: "off" }] },
+    { elementType: "labels.text.fill", stylers: [{ color: "#4b5563" }] },
+    { elementType: "labels.text.stroke", stylers: [{ color: "#ffffff" }] },
+    { featureType: "road", elementType: "geometry", stylers: [{ color: "#ffffff" }] },
+    { featureType: "water", elementType: "geometry", stylers: [{ color: "#cbd5e1" }] }
+  ];
+
+  async function initExplorer() {
+    try {
+      // Load API key configuration dynamically
+      const response = await fetch("/api/map-config/", { credentials: "same-origin" });
+      if (!response.ok) throw new Error("Authentication failed");
+      const config = await response.json();
+      
+      // Inject Google script
+      window.initExplorerMapCallback = () => setupWorkspaceMap();
+      const script = document.createElement("script");
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${config.key}&libraries=geometry,drawing,places&loading=async&callback=initExplorerMapCallback`;
+      script.async = true;
+      script.defer = true;
+      document.head.appendChild(script);
+    } catch (e) {
+      document.getElementById("explorer-workspace-map").innerHTML = `
+        <div class="text-danger p-4 text-center">
+          <span class="fs-1 d-block mb-3">🔒</span>
+          <h3>GIS Options Explorer Locked</h3>
+          <p class="text-secondary small">Please login to gain access to Google Maps API services.</p>
+        </div>`;
+    }
+  }
+
+  function setupWorkspaceMap() {
+    mapInstance = new google.maps.Map(document.getElementById("explorer-workspace-map"), {
+      center: originLatLng,
+      zoom: 8,
+      styles: darkMapStyle,
+      mapTypeId: google.maps.MapTypeId.ROADMAP,
+      streetViewControl: false,
+      mapTypeControl: false,
+      rotateControl: true,
+      tilt: 45
+    });
+
+    directionsService = new google.maps.DirectionsService();
+    directionsRenderer = new google.maps.DirectionsRenderer({
+      map: mapInstance,
+      suppressMarkers: true,
+      polylineOptions: {
+        strokeColor: "#6366f1",
+        strokeOpacity: 0.9,
+        strokeWeight: 6
+      }
+    });
+
+    // Add markers
+    new google.maps.Marker({
+      position: originLatLng,
+      map: mapInstance,
+      label: "A",
+      title: "Origin"
+    });
+
+    new google.maps.Marker({
+      position: destLatLng,
+      map: mapInstance,
+      label: "B",
+      title: destName
+    });
+
+    // 1. Setup Compass orientation listener
+    mapInstance.addListener('heading_changed', () => {
+      const heading = mapInstance.getHeading() || 0;
+      document.getElementById("compass-needle").style.transform = `rotate(${-heading}deg)`;
+    });
+
+    // Reset heading on compass click
+    document.getElementById("compass-rose").addEventListener("click", () => {
+      mapInstance.setHeading(0);
+      mapInstance.setTilt(0);
+    });
+
+    // 2. Setup Cursor Coordinate Inspector
+    mapInstance.addListener('mousemove', (event) => {
+      const lat = event.latLng.lat().toFixed(5);
+      const lng = event.latLng.lng().toFixed(5);
+      document.getElementById("cursor-coords-panel").innerHTML = `Lat: ${lat} · Lon: ${lng}`;
+    });
+
+    // 3. Setup Ruler Tool Click Listener
+    mapInstance.addListener('click', (event) => {
+      if (!rulerEnabled) return;
+      addRulerPoint(event.latLng);
+    });
+
+    loadRouteAndAnalyze();
+  }
+
+  // Ruler Distance tool logic
+  function addRulerPoint(latLng) {
+    const marker = new google.maps.Marker({
+      position: latLng,
+      map: mapInstance,
+      icon: {
+        path: google.maps.SymbolPath.CIRCLE,
+        scale: 6,
+        fillColor: "#06b6d4",
+        fillOpacity: 1,
+        strokeWeight: 1.5,
+        strokeColor: "#ffffff"
+      }
+    });
+    rulerMarkers.push(marker);
+    rulerPoints.push(latLng);
+
+    document.getElementById("ruler-points-count").textContent = rulerPoints.length;
+
+    // Draw path
+    if (rulerPolyline) {
+      rulerPolyline.setPath(rulerPoints);
+    } else {
+      rulerPolyline = new google.maps.Polyline({
+        path: rulerPoints,
+        strokeColor: "#06b6d4",
+        strokeOpacity: 0.8,
+        strokeWeight: 3,
+        strokeDasharray: "8, 5",
+        map: mapInstance
+      });
+    }
+
+    // Calculate distance
+    let totalDist = 0;
+    for (let i = 0; i < rulerPoints.length - 1; i++) {
+      totalDist += google.maps.geometry.spherical.computeDistanceBetween(rulerPoints[i], rulerPoints[i+1]);
+    }
+    document.getElementById("ruler-distance-val").textContent = `${(totalDist / 1000).toFixed(2)} km`;
+  }
+
+  // Clear ruler drawing
+  document.getElementById("btn-clear-ruler").addEventListener("click", () => {
+    rulerMarkers.forEach(m => m.setMap(null));
+    rulerMarkers = [];
+    rulerPoints = [];
+    if (rulerPolyline) {
+      rulerPolyline.setMap(null);
+      rulerPolyline = null;
+    }
+    document.getElementById("ruler-points-count").textContent = "0";
+    document.getElementById("ruler-distance-val").textContent = "0.00 km";
+  });
+
+  // Toggle Ruler
+  document.getElementById("btn-toggle-ruler").addEventListener("click", () => {
+    rulerEnabled = !rulerEnabled;
+    const btn = document.getElementById("btn-toggle-ruler");
+    const badge = document.getElementById("ruler-status-badge");
+    const info = document.getElementById("ruler-info-panel");
+    
+    if (rulerEnabled) {
+      btn.classList.replace("btn-outline-info", "btn-info");
+      badge.textContent = "Enabled";
+      badge.classList.replace("bg-secondary", "bg-light");
+      info.classList.remove("d-none");
+      mapInstance.setOptions({ draggableCursor: 'crosshair' });
+    } else {
+      btn.classList.replace("btn-info", "btn-outline-info");
+      badge.textContent = "Disabled";
+      badge.classList.replace("bg-light", "bg-secondary");
+      info.classList.add("d-none");
+      mapInstance.setOptions({ draggableCursor: null });
+    }
+  });
+
+  function loadRouteAndAnalyze() {
+    const cacheKey = `route_cache_${originLat.toFixed(4)}_${originLon.toFixed(4)}_${destLat.toFixed(4)}_${destLon.toFixed(4)}`;
+    const cachedRoute = localStorage.getItem(cacheKey);
+
+    if (cachedRoute) {
+      try {
+        const data = JSON.parse(cachedRoute);
+        routeCoords = data.roadCoords;
+        drawRoadCoordinatesPolyline(routeCoords);
+        fetchBackendHazards();
+        return;
+      } catch (e) {
+        console.warn("Cached route parse failed, loading from Directions Service.");
+      }
+    }
+
+    const request = {
+      origin: originLatLng,
+      destination: destLatLng,
+      travelMode: google.maps.TravelMode.DRIVING
+    };
+
+    directionsService.route(request, (result, status) => {
+      if (status === google.maps.DirectionsStatus.OK) {
+        directionsRenderer.setDirections(result);
+        const routeLeg = result.routes[0].legs[0];
+        routeCoords = [];
+        routeLeg.steps.forEach(step => {
+          step.path.forEach(latLng => {
+            routeCoords.push([latLng.lng(), latLng.lat()]);
+          });
+        });
+        
+        fetchBackendHazards();
+      }
+    });
+  }
+
+  function drawRoadCoordinatesPolyline(coords) {
+    const path = coords.map(c => ({ lat: c[1], lng: c[0] }));
+    const polyline = new google.maps.Polyline({
+      path: path,
+      strokeColor: "#6366f1",
+      strokeOpacity: 0.9,
+      strokeWeight: 6
+    });
+    polyline.setMap(mapInstance);
+    
+    const bounds = new google.maps.LatLngBounds();
+    path.forEach(p => bounds.extend(p));
+    mapInstance.fitBounds(bounds);
+  }
+
+  async function fetchBackendHazards() {
+    try {
+      const response = await fetch(`/api/route/${originLat}/${originLon}/${destLat}/${destLon}/`);
+      const data = await response.json();
+      renderHazardsAndCalculateBuffer(data.hazard_zones || []);
+      drawProvinceBoundaries();
+    } catch (e) {
+      console.error("Failed to load hazards", e);
+    }
+  }
+
+  // Draw Province, District, and Local level boundaries
+  function drawProvinceBoundaries() {
+    const switchProvince = document.getElementById("switch-province-boundaries");
+    const switchDistrict = document.getElementById("switch-district-boundaries");
+    const switchLocal = document.getElementById("switch-local-boundaries");
+
+    // 1. Province Boundaries - Restricted south of Nepal-China border
+    const bagmatiCoords = [
+      { lat: 28.05, lng: 85.0 },
+      { lat: 28.12, lng: 85.7 },
+      { lat: 27.98, lng: 86.3 },
+      { lat: 27.20, lng: 86.2 },
+      { lat: 27.25, lng: 85.1 },
+      { lat: 27.60, lng: 84.7 },
+      { lat: 27.90, lng: 84.8 },
+      { lat: 28.05, lng: 85.0 }
+    ];
+    const gandakiCoords = [
+      { lat: 28.75, lng: 83.8 },
+      { lat: 28.70, lng: 84.6 },
+      { lat: 28.05, lng: 85.0 },
+      { lat: 27.90, lng: 84.8 },
+      { lat: 27.60, lng: 84.7 },
+      { lat: 27.45, lng: 83.8 },
+      { lat: 27.80, lng: 83.1 },
+      { lat: 28.45, lng: 83.0 },
+      { lat: 28.75, lng: 83.8 }
+    ];
+
+    // 2. District Boundaries
+    const kathmanduDistrictCoords = [
+      { lat: 27.80, lng: 85.20 },
+      { lat: 27.78, lng: 85.45 },
+      { lat: 27.65, lng: 85.48 },
+      { lat: 27.58, lng: 85.28 },
+      { lat: 27.64, lng: 85.18 },
+      { lat: 27.80, lng: 85.20 }
+    ];
+    const kaskiDistrictCoords = [
+      { lat: 28.45, lng: 83.75 },
+      { lat: 28.42, lng: 84.18 },
+      { lat: 28.25, lng: 84.22 },
+      { lat: 28.12, lng: 83.82 },
+      { lat: 28.18, lng: 83.70 },
+      { lat: 28.45, lng: 83.75 }
+    ];
+    const chitwanDistrictCoords = [
+      { lat: 27.75, lng: 84.10 },
+      { lat: 27.70, lng: 84.80 },
+      { lat: 27.42, lng: 84.75 },
+      { lat: 27.35, lng: 84.20 },
+      { lat: 27.50, lng: 83.95 },
+      { lat: 27.75, lng: 84.10 }
+    ];
+
+    // 3. Local Level Boundaries
+    const ktmLocalCoords = [
+      { lat: 27.74, lng: 85.30 },
+      { lat: 27.73, lng: 85.35 },
+      { lat: 27.68, lng: 85.34 },
+      { lat: 27.69, lng: 85.28 },
+      { lat: 27.74, lng: 85.30 }
+    ];
+    const pokharaLocalCoords = [
+      { lat: 28.28, lng: 83.92 },
+      { lat: 28.27, lng: 84.05 },
+      { lat: 28.18, lng: 84.02 },
+      { lat: 28.17, lng: 83.90 },
+      { lat: 28.28, lng: 83.92 }
+    ];
+    const bharatpurLocalCoords = [
+      { lat: 27.70, lng: 84.40 },
+      { lat: 27.68, lng: 84.48 },
+      { lat: 27.58, lng: 84.45 },
+      { lat: 27.60, lng: 84.35 },
+      { lat: 27.70, lng: 84.40 }
+    ];
+
+    const provincePolys = [
+      new google.maps.Polygon({
+        paths: bagmatiCoords,
+        strokeColor: "#f59e0b",
+        strokeOpacity: 0.6,
+        strokeWeight: 2.2,
+        fillColor: "#f59e0b",
+        fillOpacity: 0.015,
+        map: mapInstance,
+        visible: switchProvince ? switchProvince.checked : true
+      }),
+      new google.maps.Polygon({
+        paths: gandakiCoords,
+        strokeColor: "#10b981",
+        strokeOpacity: 0.6,
+        strokeWeight: 2.2,
+        fillColor: "#10b981",
+        fillOpacity: 0.015,
+        map: mapInstance,
+        visible: switchProvince ? switchProvince.checked : true
+      })
+    ];
+
+    const districtPolys = [
+      new google.maps.Polygon({
+        paths: kathmanduDistrictCoords,
+        strokeColor: "#a855f7",
+        strokeOpacity: 0.5,
+        strokeWeight: 1.6,
+        fillColor: "#a855f7",
+        fillOpacity: 0.01,
+        map: mapInstance,
+        visible: switchDistrict ? switchDistrict.checked : true
+      }),
+      new google.maps.Polygon({
+        paths: kaskiDistrictCoords,
+        strokeColor: "#a855f7",
+        strokeOpacity: 0.5,
+        strokeWeight: 1.6,
+        fillColor: "#a855f7",
+        fillOpacity: 0.01,
+        map: mapInstance,
+        visible: switchDistrict ? switchDistrict.checked : true
+      }),
+      new google.maps.Polygon({
+        paths: chitwanDistrictCoords,
+        strokeColor: "#a855f7",
+        strokeOpacity: 0.5,
+        strokeWeight: 1.6,
+        fillColor: "#a855f7",
+        fillOpacity: 0.01,
+        map: mapInstance,
+        visible: switchDistrict ? switchDistrict.checked : true
+      })
+    ];
+
+    const localLevelPolys = [
+      new google.maps.Polygon({
+        paths: ktmLocalCoords,
+        strokeColor: "#06b6d4",
+        strokeOpacity: 0.7,
+        strokeWeight: 1.2,
+        fillColor: "#06b6d4",
+        fillOpacity: 0.01,
+        map: mapInstance,
+        visible: switchLocal ? switchLocal.checked : true
+      }),
+      new google.maps.Polygon({
+        paths: pokharaLocalCoords,
+        strokeColor: "#06b6d4",
+        strokeOpacity: 0.7,
+        strokeWeight: 1.2,
+        fillColor: "#06b6d4",
+        fillOpacity: 0.01,
+        map: mapInstance,
+        visible: switchLocal ? switchLocal.checked : true
+      }),
+      new google.maps.Polygon({
+        paths: bharatpurLocalCoords,
+        strokeColor: "#06b6d4",
+        strokeOpacity: 0.7,
+        strokeWeight: 1.2,
+        fillColor: "#06b6d4",
+        fillOpacity: 0.01,
+        map: mapInstance,
+        visible: switchLocal ? switchLocal.checked : true
+      })
+    ];
+
+    if (switchProvince) {
+      switchProvince.addEventListener("change", (e) => {
+        provincePolys.forEach(p => p.setVisible(e.target.checked));
+      });
+    }
+    if (switchDistrict) {
+      switchDistrict.addEventListener("change", (e) => {
+        districtPolys.forEach(p => p.setVisible(e.target.checked));
+      });
+    }
+    if (switchLocal) {
+      switchLocal.addEventListener("change", (e) => {
+        localLevelPolys.forEach(p => p.setVisible(e.target.checked));
+      });
+    }
+
+    // --- Nepal Hazard Buffer Zones (Nepal-wide Landslide zones + 5km buffers) ---
+    const switchNepalBuffers = document.getElementById("switch-nepal-buffers");
+    let nepalBuffersLoaded = false;
+    const nepalBufferPolys = [];
+
+    function toggleNepalBuffers(visible) {
+      if (visible && !nepalBuffersLoaded) {
+        fetch("/api/landslide-zones/")
+          .then(res => res.json())
+          .then(data => {
+            const zones = data.hazard_zones || [];
+            zones.forEach(hz => {
+              if (hz.geometry && hz.geometry.coordinates) {
+                // 1. Draw Landslide Zone
+                const polygonCoords = hz.geometry.coordinates[0].map(coord => ({
+                  lat: coord[1],
+                  lng: coord[0]
+                }));
+                
+                const polygon = new google.maps.Polygon({
+                  paths: polygonCoords,
+                  strokeColor: "#ef4444",
+                  strokeOpacity: 0.8,
+                  strokeWeight: 1.5,
+                  fillColor: "#ef4444",
+                  fillOpacity: 0.25,
+                  map: mapInstance,
+                  visible: true
+                });
+                
+                const infowindow = new google.maps.InfoWindow({
+                  content: `
+                    <div class="text-light p-2 small" style="background:#212529; border-radius:6px;">
+                      <strong>⚠️ Landslide Zone</strong><br/>
+                      Name: ${hz.properties.name}<br/>
+                      Highway: ${hz.properties.highway}<br/>
+                      Risk: <span class="badge bg-danger">${hz.properties.risk_level}</span>
+                    </div>`
+                });
+                polygon.addListener("click", (evt) => {
+                  infowindow.setPosition(evt.latLng);
+                  infowindow.open(mapInstance, polygon);
+                });
+
+                nepalBufferPolys.push(polygon);
+
+                // 2. Draw 5km Buffer
+                if (typeof turf !== 'undefined') {
+                  try {
+                    const buffered = turf.buffer(hz, 5, { units: 'kilometers' });
+                    const bufferCoords = buffered.geometry.coordinates[0].map(coord => ({
+                      lat: coord[1],
+                      lng: coord[0]
+                    }));
+
+                    const bufferPolygon = new google.maps.Polygon({
+                      paths: bufferCoords,
+                      strokeColor: "#f59e0b",
+                      strokeOpacity: 0.4,
+                      strokeWeight: 1,
+                      fillColor: "#f59e0b",
+                      fillOpacity: 0.08,
+                      map: mapInstance,
+                      visible: true,
+                      clickable: false
+                    });
+                    nepalBufferPolys.push(bufferPolygon);
+                  } catch(err) {
+                    console.warn("Turf buffer failed for landslide zone", err);
+                  }
+                }
+              }
+            });
+            nepalBuffersLoaded = true;
+          });
+      } else {
+        nepalBufferPolys.forEach(p => p.setVisible(visible));
+      }
+    }
+
+    if (switchNepalBuffers) {
+      if (switchNepalBuffers.checked) {
+        toggleNepalBuffers(true);
+      }
+      switchNepalBuffers.addEventListener("change", (e) => {
+        toggleNepalBuffers(e.target.checked);
+      });
+    }
+  }
+
+  let rawHazards = [];
+
+  function renderHazardsAndCalculateBuffer(hazards) {
+    rawHazards = hazards;
+    
+    hazards.forEach(hz => {
+      if (hz.geometry && hz.geometry.coordinates) {
+        const polygonCoords = hz.geometry.coordinates[0].map(coord => ({
+          lat: coord[1],
+          lng: coord[0]
+        }));
+        
+        let color = "#ef4444";
+        if (hz.properties.risk_level === "moderate") color = "#f59e0b";
+        else if (hz.properties.risk_level === "low") color = "#10b981";
+
+        const polygon = new google.maps.Polygon({
+          paths: polygonCoords,
+          strokeColor: color,
+          strokeOpacity: 0.8,
+          strokeWeight: 1.5,
+          fillColor: color,
+          fillOpacity: 0.25,
+          map: mapInstance
+        });
+
+        const infowindow = new google.maps.InfoWindow({
+          content: `
+            <div class="text-light p-2 small" style="background:#212529; border-radius:6px;">
+              <strong>⚠️ Hazard Zone</strong><br/>
+              District: ${hz.properties.name || "Landslide area"}<br/>
+              Highway: ${hz.properties.highway || "Highway segment"}<br/>
+              Risk: <span class="badge bg-danger">${hz.properties.risk_level}</span>
+            </div>`
+        });
+
+        polygon.addListener("click", (e) => {
+          infowindow.setPosition(e.latLng);
+          infowindow.open(mapInstance);
+        });
+
+        hazardPolygons.push(polygon);
+      }
+    });
+
+    calculateBufferPolygons(parseFloat(document.getElementById("buffer-range-slider").value));
+  }
+
+  function calculateBufferPolygons(radiusKm) {
+    if (!routeCoords.length || typeof turf === 'undefined') return;
+
+    bufferPolygons.forEach(p => p.setMap(null));
+    bufferPolygons = [];
+
+    const turfLine = turf.lineString(routeCoords);
+
+    // Multi-threshold buffer geometries
+    const thresholds = [
+      { radius: radiusKm * 0.2, color: "#ef4444", label: "1-3km Critical" },
+      { radius: radiusKm * 0.6, color: "#f59e0b", label: "3-6km Moderate" },
+      { radius: radiusKm * 1.0, color: "#10b981", label: "6-10km Low" }
+    ];
+
+    const hazardList = document.getElementById("hazard-intersection-list");
+    let detectedList = [];
+
+    thresholds.reverse().forEach(t => {
+      try {
+        const turfBuffer = turf.buffer(turfLine, t.radius, { units: 'kilometers' });
+        const bufferCoords = turfBuffer.geometry.coordinates[0].map(coord => ({
+          lat: coord[1],
+          lng: coord[0]
+        }));
+
+        const poly = new google.maps.Polygon({
+          paths: bufferCoords,
+          strokeColor: t.color,
+          strokeOpacity: 0.6,
+          strokeWeight: 1,
+          fillColor: t.color,
+          fillOpacity: 0.08,
+          map: mapInstance,
+          clickable: false
+        });
+        bufferPolygons.push(poly);
+
+        rawHazards.forEach(hz => {
+          try {
+            const intersects = turf.booleanIntersects(hz, turfBuffer);
+            if (intersects && !detectedList.some(item => item.id === hz.properties.id)) {
+              detectedList.push({
+                id: hz.properties.id,
+                name: hz.properties.name,
+                highway: hz.properties.highway,
+                risk: hz.properties.risk_level,
+                threatLevel: t.label
+              });
+            }
+          } catch(err) {}
+        });
+      } catch(err) {}
+    });
+
+    if (detectedList.length) {
+      hazardList.innerHTML = detectedList.map(item => `
+        <div class="list-group-item bg-dark border-secondary border-opacity-25 text-light p-2 rounded-3" style="font-size:0.85rem;">
+          <div class="d-flex justify-content-between align-items-center">
+            <strong class="text-warning">${item.name}</strong>
+            <span class="badge bg-danger small" style="font-size:0.65rem;">${item.risk}</span>
+          </div>
+          <div class="text-secondary small mt-1" style="font-size:0.75rem;">${item.highway} segment · Inside ${item.threatLevel}</div>
+        </div>
+      `).join("");
+    } else {
+      hazardList.innerHTML = `<div class="text-secondary small p-2">0 landslide hazards found inside the buffer zones.</div>`;
+    }
+  }
+
+  const slider = document.getElementById("buffer-range-slider");
+  const sliderVal = document.getElementById("buffer-val-badge");
+  slider.addEventListener("input", (e) => {
+    const val = e.target.value;
+    sliderVal.textContent = `${val} km`;
+    calculateBufferPolygons(parseFloat(val));
+  });
+
+  document.querySelectorAll(".theme-select-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".theme-select-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      
+      const theme = btn.dataset.theme;
+      if (!mapInstance) return;
+
+      if (theme === "dark") {
+        mapInstance.setMapTypeId(google.maps.MapTypeId.ROADMAP);
+        mapInstance.setOptions({ styles: darkMapStyle });
+      } else if (theme === "silver") {
+        mapInstance.setMapTypeId(google.maps.MapTypeId.ROADMAP);
+        mapInstance.setOptions({ styles: silverMapStyle });
+      } else if (theme === "satellite") {
+        mapInstance.setMapTypeId(google.maps.MapTypeId.SATELLITE);
+      } else if (theme === "terrain") {
+        mapInstance.setMapTypeId(google.maps.MapTypeId.TERRAIN);
+      }
+    });
+  });
+
+  initExplorer();
+});
+</script>
+{% endblock %}

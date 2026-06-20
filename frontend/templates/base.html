@@ -1,0 +1,73 @@
+{% load static %}
+<!doctype html>
+<html lang="en" data-bs-theme="dark">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}YatraNepal | Safer travel planning for Nepal{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='%236366f1'/%3E%3Ctext x='50' y='62' font-size='60' text-anchor='middle' fill='white' font-family='Arial'%3EY%3C/text%3E%3C/svg%3E">
+    
+    <!-- Bootstrap 5 CSS CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    
+    <script defer src="https://cdn.jsdelivr.net/npm/@turf/turf@7/turf.min.js"></script>
+    <script defer src="{% static 'js/api.js' %}?v=1.1"></script>
+    <script defer src="{% static 'js/map.js' %}?v=1.1"></script>
+    {% block head_extra %}{% endblock %}
+  </head>
+  <body>
+    <!-- Bootstrap Navigation Header -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark-subtle border-bottom py-3 sticky-top">
+      <div class="container">
+        <a class="navbar-brand d-flex align-items-center gap-2" href="/">
+          <span class="badge bg-primary fs-5" style="background: linear-gradient(135deg, #6366f1, #4f46e5) !important;">Y</span>
+          <div class="lh-1">
+            <span class="fw-bold d-block" style="font-family:'DM Serif Display',Georgia,serif; font-size:1.25rem; letter-spacing:0.02em;">YatraNepal</span>
+            <small class="text-secondary" style="font-size:0.75rem;">Safer travel planning for Nepal</small>
+          </div>
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-4 gap-1">
+            <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
+            {% if user.is_authenticated %}
+              <li class="nav-item"><a class="nav-link" href="/dashboard/">My Trips</a></li>
+            {% endif %}
+            <li class="nav-item"><a class="nav-link" href="/#alerts">Alerts</a></li>
+            <li class="nav-item"><a class="nav-link" href="/#about">About</a></li>
+          </ul>
+          <div class="d-flex align-items-center gap-2">
+            {% if user.is_authenticated %}
+              <a class="btn btn-outline-light btn-sm rounded-pill px-3 py-1.5" href="/logout/">Sign Out</a>
+              <a class="btn btn-primary btn-sm rounded-pill px-4 py-1.5" style="background: linear-gradient(135deg, #6366f1, #4f46e5); border: 0;" href="/plan/">Plan Trip</a>
+            {% else %}
+              <a class="btn btn-outline-light btn-sm rounded-pill px-3 py-1.5" href="/login/">Sign In</a>
+              <a class="btn btn-primary btn-sm rounded-pill px-3 py-1.5" style="background: linear-gradient(135deg, #6366f1, #4f46e5); border: 0;" href="/signup/">Sign Up</a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <main class="py-4">
+      {% block content %}{% endblock %}
+    </main>
+
+    <!-- Bootstrap Footer -->
+    <footer class="bg-dark-subtle border-top py-4 text-center mt-5">
+      <div class="container text-secondary" style="font-size:0.9rem;">
+        YatraNepal combines live weather, disaster alerts, and route risk in one planning flow. Built using open GIS public data.
+      </div>
+    </footer>
+
+    <!-- Bootstrap Bundle JS CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    {% block scripts %}{% endblock %}
+  </body>
+</html>

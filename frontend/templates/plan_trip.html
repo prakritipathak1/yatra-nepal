@@ -1,0 +1,363 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}YatraNepal | Plan trip{% endblock %}
+{% block content %}
+<div class="container my-4" id="planner-root">
+  <div class="row align-items-center mb-4">
+    <div class="col-md-8">
+      <h1 class="display-5 fw-bold text-light mb-1" style="font-family:'DM Serif Display',Georgia,serif;">Trip planner</h1>
+      <p class="text-secondary mb-0">Pick a destination, check seasonal safety, review the route, and save the trip.</p>
+    </div>
+    <div class="col-md-4 text-md-end mt-2 mt-md-0">
+      <span class="badge bg-primary fs-6 px-3 py-2 rounded-pill" id="planner-status">Step 1 of 5</span>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Left Sidebar: Steps -->
+    <div class="col-lg-3">
+      <div class="list-group shadow-sm border border-secondary border-opacity-25 rounded-4 overflow-hidden" id="wizard-steps-list">
+        <button class="list-group-item list-group-item-action active p-3 d-flex flex-column border-0" data-step="1">
+          <span class="fw-bold">1. Destination</span>
+          <small class="opacity-75">Choose where to go</small>
+        </button>
+        <button class="list-group-item list-group-item-action p-3 d-flex flex-column border-0" data-step="2" disabled>
+          <span class="fw-bold">2. Dates & Origin</span>
+          <small class="opacity-75">Set departure and return</small>
+        </button>
+        <button class="list-group-item list-group-item-action p-3 d-flex flex-column border-0" data-step="3" disabled>
+          <span class="fw-bold">3. GIS Forecast</span>
+          <small class="opacity-75">Weather, risk, route</small>
+        </button>
+        <button class="list-group-item list-group-item-action p-3 d-flex flex-column border-0" data-step="4" disabled>
+          <span class="fw-bold">4. Confirm</span>
+          <small class="opacity-75">Review your plan</small>
+        </button>
+        <button class="list-group-item list-group-item-action p-3 d-flex flex-column border-0" data-step="5" disabled>
+          <span class="fw-bold">5. Saved</span>
+          <small class="opacity-75">Alerts activated</small>
+        </button>
+      </div>
+    </div>
+
+    <!-- Right Content Area -->
+    <div class="col-lg-9">
+      <!-- Step 1: Destination -->
+      <div class="panel active" data-panel="1">
+        <div class="card bg-dark-subtle border-secondary border-opacity-25 p-4 rounded-4 shadow-sm">
+          <h2 class="h4 fw-bold text-light mb-3" style="font-family:'DM Serif Display',Georgia,serif;">Select a destination</h2>
+          <p class="text-secondary small">Click on a card to select your travel destination.</p>
+          <div id="destination-grid" class="row row-cols-1 row-cols-md-2 g-3 my-2"></div>
+          <div class="d-flex justify-content-end mt-4">
+            <button type="button" id="step1-next" class="btn btn-primary rounded-pill px-4" disabled>Continue</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Dates -->
+      <div class="panel" data-panel="2">
+        <div class="row g-4">
+          <div class="col-md-7">
+            <div class="card bg-dark-subtle border-secondary border-opacity-25 p-4 rounded-4 shadow-sm h-100">
+              <h2 class="h4 fw-bold text-light mb-3" style="font-family:'DM Serif Display',Georgia,serif;">Choose dates and origin</h2>
+              <div class="mb-3 position-relative">
+                <label for="origin-city" class="form-label fw-semibold text-secondary">Origin city</label>
+                <input id="origin-city" type="text" class="form-control bg-dark border-secondary border-opacity-50 text-light py-2 rounded-3" autocomplete="off" placeholder="Search your starting city...">
+                <div id="origin-results" class="list-group position-absolute w-100 mt-1 shadow-lg z-3" style="max-height:200px; overflow-y:auto;"></div>
+              </div>
+              <div class="row g-3 mb-3">
+                <div class="col-6">
+                  <label for="departure-date" class="form-label fw-semibold text-secondary">Departure</label>
+                  <input id="departure-date" type="date" class="form-control bg-dark border-secondary border-opacity-50 text-light py-2 rounded-3">
+                </div>
+                <div class="col-6">
+                  <label for="return-date" class="form-label fw-semibold text-secondary">Return</label>
+                  <input id="return-date" type="date" class="form-control bg-dark border-secondary border-opacity-50 text-light py-2 rounded-3">
+                </div>
+              </div>
+              <small class="text-secondary opacity-75">The dates control weather forecasts, seasonal fit, and calculated travel ratings.</small>
+            </div>
+          </div>
+          <div class="col-md-5">
+            <div class="card bg-dark-subtle border-secondary border-opacity-25 p-4 rounded-4 shadow-sm h-100">
+              <h2 class="h4 fw-bold text-light mb-3" style="font-family:'DM Serif Display',Georgia,serif;">Plan summary</h2>
+              <div id="trip-summary" class="text-secondary"></div>
+            </div>
+          </div>
+        </div>
+        <div class="d-flex justify-content-between mt-4">
+          <button type="button" id="step2-back" class="btn btn-outline-secondary rounded-pill px-4">Back</button>
+          <button type="button" id="step2-next" class="btn btn-primary rounded-pill px-4" disabled>Continue</button>
+        </div>
+      </div>
+
+      <!-- Step 3: Forecast Dashboard & GIS Tools -->
+      <div class="panel" data-panel="3">
+        <div class="card bg-dark-subtle border-secondary border-opacity-25 p-4 rounded-4 shadow-sm">
+          <h2 class="h4 fw-bold text-light mb-3" style="font-family:'DM Serif Display',Georgia,serif;">Forecast & GIS dashboard</h2>
+          
+          <ul class="nav nav-pills gap-2 mb-4" id="dashboard-tabs" role="tablist">
+            <li class="nav-item"><button class="nav-link active rounded-pill px-3 py-2" type="button" data-tab="weather">Weather</button></li>
+            <li class="nav-item"><button class="nav-link rounded-pill px-3 py-2" type="button" data-tab="risk">Disaster Risk</button></li>
+            <li class="nav-item"><button class="nav-link rounded-pill px-3 py-2" type="button" data-tab="route">Route & GIS Tools</button></li>
+            <li class="nav-item"><button class="nav-link rounded-pill px-3 py-2" type="button" data-tab="rating">Travel Rating</button></li>
+          </ul>
+
+          <div class="tab-content">
+            <!-- Weather Tab -->
+            <div class="tab-panel active" id="tab-weather">
+              <div id="weather-grid" class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3"></div>
+            </div>
+            
+            <!-- Risk Tab -->
+            <div class="tab-panel" id="tab-risk">
+              <div id="risk-bars" class="row row-cols-1 row-cols-md-2 g-3"></div>
+              <div id="risk-alerts" class="mt-4"></div>
+            </div>
+            
+            <!-- Route Map & GIS Tools Tab -->
+            <div class="tab-panel" id="tab-route">
+              <div class="row g-4">
+                <!-- Map Column -->
+                <div class="col-lg-8 position-relative">
+                  <div class="position-relative shadow-sm rounded-4 overflow-hidden border border-secondary border-opacity-25" style="height:620px;">
+                    <div id="trip-map" class="w-100 h-100 bg-dark-subtle"></div>
+                    
+                    <!-- Compass Rose Overlay -->
+                    <div id="compass-rose" class="position-absolute bg-dark bg-opacity-75 border border-secondary border-opacity-50 p-2 rounded-circle shadow" style="top: 15px; right: 15px; width: 44px; height: 44px; cursor: pointer; z-index: 10; display: flex; align-items: center; justify-content: center;" title="Reset Map Heading to True North">
+                      <svg viewBox="0 0 100 100" class="w-100 h-100" style="transition: transform 0.2s ease; width: 28px; height: 28px;" id="compass-needle">
+                        <polygon points="50,10 40,50 50,45" fill="#ef4444" />
+                        <polygon points="50,10 60,50 50,45" fill="#f8f9fa" />
+                        <polygon points="50,90 40,50 50,55" fill="#6b7280" />
+                        <polygon points="50,90 60,50 50,55" fill="#9ca3af" />
+                        <circle cx="50" cy="50" r="4" fill="#1f2937" />
+                      </svg>
+                    </div>
+
+                    <!-- Cursor Coordinates Inspector Panel -->
+                    <div class="position-absolute bg-dark bg-opacity-75 border border-secondary border-opacity-50 px-2 py-1 rounded-3 shadow text-secondary" style="bottom: 15px; left: 15px; font-family: monospace; font-size: 0.75rem; z-index: 10;" id="cursor-coords-panel">
+                      Lat: --.---- · Lon: --.----
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Sidebar Toolset Column -->
+                <div class="col-lg-4">
+                  <div class="card bg-dark border-secondary border-opacity-25 p-3 rounded-4 h-100" style="max-height:620px; overflow-y:auto;">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                      <h3 class="h5 fw-bold text-light mb-0" style="font-family:'DM Serif Display',Georgia,serif;">GIS Toolset</h3>
+                      <button id="btn-explore-gis-advanced" class="btn btn-outline-primary btn-xs rounded-pill px-2.5" style="font-size:0.75rem;">Explore GIS</button>
+                    </div>
+                    
+                    <!-- Advanced GIS Options: Ruler & Boundaries -->
+                    <div class="border-bottom border-secondary border-opacity-20 pb-3 mb-3">
+                      <h4 class="h6 fw-bold text-primary mb-2">🌐 Expert Analyst Tools</h4>
+                      <div class="d-flex flex-column gap-2">
+                        <!-- Ruler -->
+                        <button id="btn-toggle-ruler" class="btn btn-outline-info btn-sm rounded-3 py-2 text-start d-flex justify-content-between align-items-center" style="font-size: 0.8rem;">
+                          <span>📏 Geodesic Path Ruler</span>
+                          <span class="badge bg-secondary" id="ruler-status-badge">Disabled</span>
+                        </button>
+                        <div id="ruler-info-panel" class="bg-dark bg-opacity-50 border border-secondary border-opacity-25 rounded-3 p-2 small text-secondary d-none">
+                          <div class="d-flex justify-content-between" style="font-size:0.75rem;">
+                            <span>Points: <strong class="text-light" id="ruler-points-count">0</strong></span>
+                            <span>Distance: <strong class="text-info" id="ruler-distance-val">0.00 km</strong></span>
+                          </div>
+                          <button id="btn-clear-ruler" class="btn btn-danger btn-xs mt-1 w-100 rounded-pill py-0.5" style="font-size:0.7rem;">Clear Ruler Path</button>
+                        </div>
+
+                        <!-- Boundaries -->
+                        <div class="form-check form-switch mt-1">
+                          <input class="form-check-input" type="checkbox" id="switch-province-boundaries" checked>
+                          <label class="form-check-label text-light small" for="switch-province-boundaries">🗺️ Province Boundaries</label>
+                        </div>
+                        <div class="form-check form-switch mt-1">
+                          <input class="form-check-input" type="checkbox" id="switch-district-boundaries" checked>
+                          <label class="form-check-label text-light small" for="switch-district-boundaries">📍 District Boundaries</label>
+                        </div>
+                        <div class="form-check form-switch mt-1">
+                          <input class="form-check-input" type="checkbox" id="switch-local-boundaries" checked>
+                          <label class="form-check-label text-light small" for="switch-local-boundaries">🏢 Local Level Boundaries</label>
+                        </div>
+                        <div class="form-check form-switch mt-1">
+                          <input class="form-check-input" type="checkbox" id="switch-nepal-buffers">
+                          <label class="form-check-label text-light small" for="switch-nepal-buffers">⚠️ Nepal Hazard Buffers</label>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Local Tourism Places Finder -->
+                    <div class="border-bottom border-secondary border-opacity-20 pb-3 mb-3">
+                      <h4 class="h6 fw-bold text-primary mb-2">🔍 Local Tourism Finder</h4>
+                      <div class="input-group input-group-sm mb-2">
+                        <input type="text" id="places-search-input" class="form-control bg-dark border-secondary border-opacity-50 text-light" placeholder="Search place (e.g. Lakeside)">
+                        <button class="btn btn-primary btn-sm" type="button" id="btn-places-search" style="background: linear-gradient(135deg, #6366f1, #4f46e5); border:0;">Search</button>
+                      </div>
+                      <div class="d-flex flex-column gap-1 text-secondary mb-2" style="font-size:0.8rem;">
+                        <div class="form-check">
+                          <input class="form-check-input" type="checkbox" id="find-lodging" checked>
+                          <label class="form-check-label text-light" for="find-lodging">🏨 Hotels & Lodging</label>
+                        </div>
+                        <div class="form-check">
+                          <input class="form-check-input" type="checkbox" id="find-restaurant" checked>
+                          <label class="form-check-label text-light" for="find-restaurant">🍴 Restaurants & Cafes</label>
+                        </div>
+                        <div class="form-check">
+                          <input class="form-check-input" type="checkbox" id="find-attraction" checked>
+                          <label class="form-check-label text-light" for="find-attraction">🎡 Tourist Attractions</label>
+                        </div>
+                      </div>
+                      <div id="places-search-results" class="list-group gap-1 overflow-y-auto" style="max-height:140px;"></div>
+                    </div>
+
+                    <!-- Spatial Route Measurements & Buffers -->
+                    <div class="border-bottom border-secondary border-opacity-20 pb-3 mb-3">
+                      <h4 class="h6 fw-bold text-primary mb-2">🛣️ Route Buffers & Measures</h4>
+                      <div class="d-flex flex-column gap-2">
+                        <button id="btn-measure-dist" class="btn btn-outline-secondary btn-sm rounded-3 py-2 text-start">Measure Road Route</button>
+                        <div class="row g-2 text-center" style="font-size:0.75rem;">
+                          <div class="col-6">
+                            <div class="bg-dark bg-opacity-50 border border-secondary border-opacity-10 p-1.5 rounded-3">
+                              <small class="text-secondary d-block">Distance</small>
+                              <strong id="dist-result" class="text-light">-- km</strong>
+                            </div>
+                          </div>
+                          <div class="col-6">
+                            <div class="bg-dark bg-opacity-50 border border-secondary border-opacity-10 p-1.5 rounded-3">
+                              <small class="text-secondary d-block">Est. Time</small>
+                              <strong id="duration-result" class="text-light">--</strong>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Real-time Turf Buffer Slider -->
+                        <div class="mt-2">
+                          <div class="d-flex justify-content-between align-items-center mb-1">
+                            <button id="btn-route-buffer" class="btn btn-outline-secondary btn-xs py-0 px-2 rounded-2" style="font-size:0.75rem;">Recalculate Buffer</button>
+                            <span class="badge bg-primary" id="buffer-val-badge">5 km</span>
+                          </div>
+                          <input type="range" class="form-range" id="buffer-range-slider" min="1" max="20" value="5">
+                          <div class="d-flex justify-content-between align-items-center px-1">
+                            <small class="text-secondary">Hazards Inside Buffer:</small>
+                            <strong id="buffer-status" class="badge bg-secondary">0 zones</strong>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Spots Along Route -->
+                    <div id="gis-route-spots-panel" style="display:none;" class="border-bottom border-secondary border-opacity-20 pb-3 mb-3">
+                      <h4 class="h6 fw-bold text-primary mb-2">🛣️ Spots Along Route</h4>
+                      <div id="route-spots-list" class="list-group gap-2 overflow-y-auto" style="max-height:130px;"></div>
+                    </div>
+
+                    <!-- Find Nearest Spot (Bottom Sidebar Position) -->
+                    <div class="border-bottom border-secondary border-opacity-20 pb-3 mb-3">
+                      <h4 class="h6 fw-bold text-primary mb-2">📍 Find Nearest Spot</h4>
+                      <button id="btn-nearest-dest" class="btn btn-outline-secondary btn-sm w-100 rounded-3 py-2 text-start mb-2">🔍 Locate Closest Travel Spot</button>
+                      <div class="d-flex justify-content-between align-items-center px-1">
+                        <small class="text-secondary">Nearest:</small>
+                        <strong id="nearest-result" class="badge bg-success">None</strong>
+                      </div>
+                    </div>
+
+                    <!-- Styled Map Themes Selector -->
+                    <div>
+                      <h4 class="h6 fw-bold text-primary mb-2">🎨 Map Themes</h4>
+                      <div class="row g-2">
+                        <div class="col-6"><button class="btn btn-outline-light btn-xs w-100 rounded-3 active theme-select-btn" data-theme="dark" style="font-size:0.75rem;">Dark Mode</button></div>
+                        <div class="col-6"><button class="btn btn-outline-light btn-xs w-100 rounded-3 theme-select-btn" data-theme="silver" style="font-size:0.75rem;">Silver Style</button></div>
+                        <div class="col-6"><button class="btn btn-outline-light btn-xs w-100 rounded-3 theme-select-btn" data-theme="satellite" style="font-size:0.75rem;">Satellite</button></div>
+                        <div class="col-6"><button class="btn btn-outline-light btn-xs w-100 rounded-3 theme-select-btn" data-theme="terrain" style="font-size:0.75rem;">Terrain</button></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Rating Tab -->
+            <div class="tab-panel" id="tab-rating">
+              <div class="row align-items-center g-4">
+                <div class="col-md-5 text-center">
+                  <div id="rating-ring" class="rating-ring"></div>
+                </div>
+                <div class="col-md-7">
+                  <div id="rating-bars" class="d-flex flex-column gap-3 text-secondary"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-between mt-4">
+            <button type="button" id="step3-back" class="btn btn-outline-secondary rounded-pill px-4">Back</button>
+            <button type="button" id="step3-next" class="btn btn-primary rounded-pill px-4" disabled>Continue</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 4: Confirm -->
+      <div class="panel" data-panel="4">
+        <div class="row g-4">
+          <div class="col-md-7">
+            <div class="card bg-dark-subtle border-secondary border-opacity-25 p-4 rounded-4 shadow-sm h-100">
+              <h2 class="h4 fw-bold text-light mb-3" style="font-family:'DM Serif Display',Georgia,serif;">Confirm your trip</h2>
+              <div id="trip-summary-confirm" class="text-secondary"></div>
+            </div>
+          </div>
+          <div class="col-md-5">
+            <div class="card bg-dark-subtle border-secondary border-opacity-25 p-4 rounded-4 shadow-sm h-100 justify-content-center">
+              <h2 class="h4 fw-bold text-light mb-2" style="font-family:'DM Serif Display',Georgia,serif;">Ready to save</h2>
+              <p class="text-secondary mb-4">Saving the trip activates your local alert subscription entry and stores the trip locally in your browser.</p>
+              <div class="d-flex flex-column gap-2">
+                <button type="button" id="step4-save" class="btn btn-primary rounded-pill py-2 w-100" style="background: linear-gradient(135deg, #6366f1, #4f46e5); border: 0;">Save Trip</button>
+                <button type="button" id="step4-back" class="btn btn-outline-secondary rounded-pill py-2 w-100">Back</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 5: Completed -->
+      <div class="panel" data-panel="5">
+        <div class="card bg-dark-subtle border-secondary border-opacity-25 p-5 rounded-4 shadow-sm text-center">
+          <div id="completion-message" class="text-secondary mb-4"></div>
+          <div class="d-flex gap-3 justify-content-center">
+            <a class="btn btn-primary rounded-pill px-4" style="background: linear-gradient(135deg, #6366f1, #4f46e5); border: 0;" href="/dashboard/">Go to dashboard</a>
+            <a class="btn btn-outline-secondary rounded-pill px-4" href="/plan/">Plan another trip</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{% static 'js/planner.js' %}?v=1.1"></script>
+<script>
+(function () {
+  const tabs = document.querySelectorAll('[data-tab]');
+  const panels = {
+    weather: document.getElementById('tab-weather'),
+    risk: document.getElementById('tab-risk'),
+    route: document.getElementById('tab-route'),
+    rating: document.getElementById('tab-rating'),
+  };
+  tabs.forEach((button) => {
+    button.addEventListener('click', () => {
+      tabs.forEach((item) => item.classList.remove('active'));
+      button.classList.add('active');
+      Object.keys(panels).forEach((key) => panels[key].classList.remove('active'));
+      panels[button.dataset.tab].classList.add('active');
+      if (button.dataset.tab === 'route' && window.YatraNepalPlanner && window.YatraNepalPlanner.state.route) {
+        setTimeout(() => {
+          if (window.YatraNepalPlanner.refreshRouteMap) {
+            window.YatraNepalPlanner.refreshRouteMap();
+          }
+        }, 50);
+      }
+    });
+  });
+})();
+</script>
+{% endblock %}

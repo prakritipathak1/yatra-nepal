@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}YatraNepal | Plan safer adventures in Nepal{% endblock %}
+{% block content %}
+<div class="container my-5">
+  <!-- Hero Section -->
+  <div class="row align-items-center g-5">
+    <div class="col-lg-6">
+      <span class="badge bg-primary-subtle text-primary rounded-pill mb-3 px-3 py-2 fw-semibold">Live weather + BIPAD alerts + Road routing</span>
+      <h1 class="display-4 fw-bold lh-sm text-light mb-3" style="font-family:'DM Serif Display',Georgia,serif;">Plan safer adventures in Nepal</h1>
+      <p class="lead text-secondary mb-4">Compare destinations, inspect seven-day weather, check landslide exposure, and save trips with a travel rating that reflects real conditions instead of guesswork.</p>
+      
+      <div class="mb-5">
+        <a class="btn btn-primary btn-lg rounded-pill px-4" style="background: linear-gradient(135deg, #6366f1, #4f46e5); border: 0;" href="/plan/">Start Planning Now</a>
+      </div>
+
+      <div class="row g-3">
+        <div class="col-4">
+          <div class="card bg-dark-subtle border-secondary border-opacity-25 h-100">
+            <div class="card-body py-3 text-center">
+              <h3 class="fw-bold text-primary mb-1">8</h3>
+              <small class="text-secondary" style="font-size:0.75rem;">Destinations</small>
+            </div>
+          </div>
+        </div>
+        <div class="col-4">
+          <div class="card bg-dark-subtle border-secondary border-opacity-25 h-100">
+            <div class="card-body py-3 text-center">
+              <h3 class="fw-bold text-primary mb-1">Live</h3>
+              <small class="text-secondary" style="font-size:0.75rem;">Open-Meteo</small>
+            </div>
+          </div>
+        </div>
+        <div class="col-4">
+          <div class="card bg-dark-subtle border-secondary border-opacity-25 h-100">
+            <div class="card-body py-3 text-center">
+              <h3 class="fw-bold text-primary mb-1">Active</h3>
+              <small class="text-secondary" style="font-size:0.75rem;">BIPAD Alerts</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="position-relative shadow-lg rounded-4 overflow-hidden bg-dark-subtle d-flex align-items-center justify-content-center border border-secondary border-opacity-25" style="height:520px;">
+        <div id="landing-map" class="w-100 h-100"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Features Section -->
+  <div class="my-5 py-5" id="about">
+    <div class="text-center mb-5">
+      <h2 class="display-6 fw-bold text-light mb-3" style="font-family:'DM Serif Display',Georgia,serif;">Travel planning built around safety</h2>
+      <p class="text-secondary mx-auto" style="max-width: 600px;">YatraNepal uses free geospatial and public data services to provide practical trip guidance without complex registration.</p>
+    </div>
+    <div class="row g-4">
+      <div class="col-md-4">
+        <div class="card bg-dark-subtle border-secondary border-opacity-25 h-100">
+          <div class="card-body p-4">
+            <span class="badge bg-primary-subtle text-primary rounded-pill mb-3">Weather</span>
+            <h3 class="h5 fw-bold text-light mb-2">Seven-day forecasts</h3>
+            <p class="text-secondary card-text mb-0">Open-Meteo data is cached and translated into plain-language day-by-day guidance.</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card bg-dark-subtle border-secondary border-opacity-25 h-100">
+          <div class="card-body p-4">
+            <span class="badge bg-danger-subtle text-danger rounded-pill mb-3">Disaster Risk</span>
+            <h3 class="h5 fw-bold text-light mb-2">BIPAD alerts</h3>
+            <p class="text-secondary card-text mb-0">District-level landslide and flood incidents are cached and shown on the route map.</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card bg-dark-subtle border-secondary border-opacity-25 h-100">
+          <div class="card-body p-4">
+            <span class="badge bg-success-subtle text-success rounded-pill mb-3">GIS</span>
+            <h3 class="h5 fw-bold text-light mb-2">Spatial Routing</h3>
+            <p class="text-secondary card-text mb-0">Route lines and hazard polygons are evaluated with spatial intersections on the server and Turf on the client.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Details/Alerts Section -->
+  <div class="row g-4 my-5" id="alerts">
+    <div class="col-md-6">
+      <div class="card bg-dark-subtle border-secondary border-opacity-25 h-100 p-4">
+        <h2 class="h4 fw-bold text-light mb-3" style="font-family:'DM Serif Display',Georgia,serif;">What you can check</h2>
+        <ul class="text-secondary mb-0">
+          <li class="mb-2">Weather suitability for sailing, trekking, and road travel.</li>
+          <li class="mb-2">Landslide zones near Prithvi Highway.</li>
+          <li class="mb-2">Live BIPAD incidents by district.</li>
+          <li class="mb-2">Trip ratings with weather, route safety, and seasonal fit.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card bg-dark-subtle border-secondary border-opacity-25 h-100 p-4 justify-content-center">
+        <h2 class="h4 fw-bold text-light mb-2" style="font-family:'DM Serif Display',Georgia,serif;">Start with a destination</h2>
+        <p class="text-secondary mb-4">Jump straight into the step-by-step planner to design your trip, check weather suitability, and map your route.</p>
+        <div>
+          <a class="btn btn-primary rounded-pill px-4" style="background: linear-gradient(135deg, #6366f1, #4f46e5); border: 0;" href="/plan/">View Planner</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const mapEl = document.getElementById('landing-map');
+    if (!mapEl) return; // Exit early if map is locked for unauthenticated users
+
+    function tryInit() {
+      if (typeof google !== 'undefined' && window.initMap) {
+        const origin = { name: 'Kathmandu', lat: 27.7172, lon: 85.3240 };
+        const destination = { name: 'Pokhara', lat: 28.2096, lon: 83.9556, district: 'Kaski' };
+        initMap('landing-map', origin, destination, { route: { type: 'LineString', coordinates: [[85.3240, 27.7172], [83.9556, 28.2096]] }, hazard_zones: [] }, []);
+      } else {
+        setTimeout(tryInit, 100);
+      }
+    }
+    tryInit();
+  });
+</script>
+{% endblock %}
